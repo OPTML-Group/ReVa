@@ -3,6 +3,7 @@
 
 import json
 import os
+from pathlib import Path
 import torch
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -213,7 +214,7 @@ def evaluate_open_form_consistency(model, tokenizer, root, device='cuda', max_sa
     """
     评估模型在Open-Form问题上的一致性
     """
-    data_path = "/egr/research-optml/jackyofgrj/grj/BeHonest/Open_Form/csqa_open.json"
+    data_path = Path(__file__).resolve().parents[3] / "files" / "data" / "csqa_open.json"
 
     if not os.path.exists(data_path):
         print(f"数据文件不存在: {data_path}")

@@ -12,7 +12,7 @@ from sklearn.svm import SVC
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from dataset.dataset import build_unlearn_dataset, get_WikiMIA_dataset
+from eval.dataset.dataset import build_unlearn_dataset, get_WikiMIA_dataset
 
 
 def calculatePerplexity(sentence, model, tokenizer):

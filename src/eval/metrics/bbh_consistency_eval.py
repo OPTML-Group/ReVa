@@ -16,6 +16,7 @@ BBH Consistency Evaluation Module
 import json
 import os
 import re
+from pathlib import Path
 import torch
 from tqdm import tqdm
 from string import ascii_uppercase
@@ -488,7 +489,7 @@ def evaluate_bbh_consistency(
     print(f"Starting BBH consistency evaluation for {model_name}...")
 
     # BBH 数据目录（按你的项目路径）
-    bbh_data_dir = "/egr/research-optml/jackyofgrj/grj/BeHonest/Demonstration_Format/bbh"
+    bbh_data_dir = Path(__file__).resolve().parents[3] / "files" / "data" / "bbh"
     if not os.path.exists(bbh_data_dir):
         print(f"Error: BBH data directory not found: {bbh_data_dir}")
         return {"error": "BBH data directory not found"}

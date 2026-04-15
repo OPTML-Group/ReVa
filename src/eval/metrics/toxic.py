@@ -6,7 +6,7 @@ import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 sys.path.append("src")
-from dataset.dataset import get_pku_test_dataset, get_real_toxic_dataset
+from eval.dataset.dataset import get_pku_test_dataset, get_real_toxic_dataset
 
 
 def eval_toxic_forget(model, tokenizer, dataset, batch_size=4):

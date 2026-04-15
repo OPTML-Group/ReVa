@@ -18,6 +18,7 @@ import torch
 from tqdm import tqdm
 from .utils_prompt import build_chat_prompt
 import os
+from pathlib import Path
 
 def get_prompt_format(model_name):
     """获取模型的prompt格式"""
@@ -253,10 +254,10 @@ def evaluate_answer_rate(model, tokenizer, root, device='cuda', max_samples=None
     
     # 查找已知题目文件
     if known_questions_file is None:
+        repo_root = Path(__file__).resolve().parents[3]
         # 尝试多个可能的路径
         possible_paths = [
-            # 绝对路径（基于已知的文件位置）
-            "/egr/research-optml/jackyofgrj/grj/simnpo_wmdp/files/data/Knows/knowns.json",
+            str(repo_root / "files" / "data" / "Knowns" / "knowns.json"),
         ]
         
         known_questions_file = None

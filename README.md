@@ -20,21 +20,68 @@ pip install -r requirements.txt
 
 ### Download Datasets
 
-Our evaluation and REVA training pipeline requires one local WMDP-Bio forget corpus file: `files/data/bio_remove_dataset.jsonl`.
+Before running the full evaluation pipeline, users need to prepare the following datasets manually.
 
-You can generate it directly from the public Hugging Face dataset:
+1. `bio_remove_dataset.jsonl`
+
+This file is required by both evaluation and REVA training. You can generate it directly from the public Hugging Face dataset `cais/wmdp-bio-forget-corpus` by running:
 
 ```bash
 python files/prepareData.py
 ```
 
-This script downloads `cais/wmdp-bio-forget-corpus` and saves it to:
+This script saves the file to:
 
 ```bash
 files/data/bio_remove_dataset.jsonl
 ```
 
-In addition, `wikitext` and `cais/wmdp` are fetched automatically by the Hugging Face `datasets` library during the first run and cached under `.cache/`.
+2. `bbh/`
+
+For BBH consistency evaluation, download the `bbh` data folder from:
+
+- `https://github.com/milesaturpin/cot-unfaithfulness/tree/main/data/bbh`
+
+and place it under:
+
+```bash
+files/data/bbh
+```
+
+After downloading, the structure should look like:
+
+```text
+files/data/bbh/
+├─ causal_judgment/
+├─ date_understanding/
+├─ disambiguation_qa/
+├─ ...
+└─ web_of_lies/
+```
+
+
+The repository already includes the following local evaluation files, so users do not need to download them separately:
+
+- `files/data/Knows/knowns.json`
+  Used for knowledge-retention evaluation. 
+- `files/data/Unknowns/unknowns.json`
+  Used for unknown-question refusal evaluation. 
+- `files/data/csqa_open.json`
+  Used for the Open-Form Consistency evaluation.
+- `files/data/polite_refusal_responses/polite_refusal_responses.csv`
+  Used as auxiliary refusal-response templates in parts of the evaluation pipeline.
+
+The following public datasets are downloaded automatically during the first run and cached under `.cache/`:
+
+- `wikitext`
+- `cais/wmdp` including `wmdp-bio`
+- `mmlu` task data used by `lm_eval`
+
+Users therefore do not need to manually download these datasets in advance, but they do need:
+
+- a working internet connection for the first run
+- the required evaluation dependencies installed, especially `datasets` and `lm_eval`
+- enough local disk space for the cache directory
 
 After the dataset setup, your local directory should look like:
 
@@ -44,8 +91,10 @@ After the dataset setup, your local directory should look like:
 ├─ configs/
 ├─ files/
 │  ├─ data/
+│  │  ├─ bbh/
 │  │  ├─ bio_remove_dataset.jsonl
-│  │  ├─ Knows/knowns.json
+│  │  ├─ csqa_open.json
+│  │  ├─ Knowns/knowns.json
 │  │  ├─ Unknowns/unknowns.json
 │  │  └─ polite_refusal_responses/polite_refusal_responses.csv
 │  └─ results/
@@ -53,21 +102,9 @@ After the dataset setup, your local directory should look like:
 └─ src/
 ```
 
-### Download Pretrained Models
+### Download Unlearned Models
 
 This repository does not include model weights. Please download the required checkpoints yourself and place them under `checkpoints/`.
-
-Install the Hugging Face CLI first if needed:
-
-```bash
-pip install huggingface_hub
-```
-
-Then create the checkpoint directory:
-
-```bash
-mkdir -p checkpoints
-```
 
 The following open-source checkpoints are publicly available and can be downloaded directly.
 
@@ -133,7 +170,7 @@ After downloading, point your config or script variables to the corresponding lo
 
 ## Quick Evaluation
 
-### Using Our Released Model
+### Using Existing Models
 
 Edit `configs/example_eval_config.json` and set the following fields to your local model directory:
 
@@ -165,6 +202,13 @@ Then run:
 bash scripts/run_eval.sh
 ```
 
+During evaluation, the script will automatically download public benchmark data if it is not already cached, including:
+
+- `cais/wmdp` for `wmdp-bio`
+- `mmlu` task data through `lm_eval`
+
+No separate manual dataset download is required for these benchmarks.
+
 ### Using Your Own Model
 
 You can also evaluate any local model by providing a custom config file:
@@ -179,6 +223,26 @@ The evaluation results will be written to the directory specified by `logger.jso
 
 ```bash
 files/results/example_model_results/your_model_name/
+```
+
+### Aggregate Metrics
+
+After evaluating multiple models, you can aggregate all metrics into an Excel file:
+
+```bash
+python scripts/analyze_eval_results.py
+```
+
+Before running it, edit the following fields in `scripts/analyze_eval_results.py`:
+
+- `BASE_PATH`
+- `OUTPUT_FILENAME`
+
+For example:
+
+```python
+BASE_PATH = "files/results/example_model_results"
+OUTPUT_FILENAME = "analysis_comprehensive_example.xlsx"
 ```
 
 ## Repository Structure
@@ -260,6 +324,8 @@ The training script will:
 3. Use `bio_remove_dataset.jsonl` as the forget corpus and `wikitext` as the retain corpus
 4. Save checkpoints and logs under `OUT_ROOT`
 
+If `wikitext` is not already cached locally, it will be downloaded automatically during the first run.
+
 ## Testing & Evaluation
 
 ### Evaluate a Trained REVA Model
@@ -271,22 +337,15 @@ CONFIG_FILE=/absolute/path/to/your_reva_eval_config.json \
 bash scripts/run_eval.sh
 ```
 
-### Aggregate Metrics
+## Acknowledgements
 
-After evaluating multiple models, you can aggregate all metrics into an Excel file:
+This project builds upon open-source benchmarks, datasets, and evaluation resources from (including but not limited to):
 
-```bash
-python scripts/analyze_eval_results.py
-```
+- [`MMLU`](https://github.com/hendrycks/test)
+- [`WMDP`](https://github.com/centerforaisafety/wmdp)
+- [`CSQA`](https://github.com/jonathanherzig/commonsenseqa)
+- [`BeHonest`](https://github.com/GAIR-NLP/BeHonest)
+- [`cot-unfaithfulness`](https://github.com/milesaturpin/cot-unfaithfulness)
+- [`BBH`](https://github.com/suzgunmirac/BIG-Bench-Hard)
 
-Before running it, edit the following fields in `scripts/analyze_eval_results.py`:
-
-- `BASE_PATH`
-- `OUTPUT_FILENAME`
-
-For example:
-
-```python
-BASE_PATH = "files/results/example_model_results"
-OUTPUT_FILENAME = "analysis_comprehensive_example.xlsx"
-```
+We sincerely thank the respective authors for releasing their codebases, datasets, and evaluation resources.

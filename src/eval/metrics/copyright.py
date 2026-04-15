@@ -6,7 +6,7 @@ import tqdm
 from rouge_score import rouge_scorer
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import json
-from metrics.MIA import calculatePerplexity
+from eval.metrics.MIA import calculatePerplexity
 sys.path.append("src")
 import zlib
 import numpy as np

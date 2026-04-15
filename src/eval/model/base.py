@@ -5,7 +5,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 sys.path.append("src")
-from dataset.dataset import bookcorpus_loaders, get_WikiMIA_dataset
+from eval.dataset.dataset import bookcorpus_loaders, get_WikiMIA_dataset
 from eval.metrics import eval_few_shots, eval_MIA, eval_ppl, eval_toxic
 from trainer import sparsetrainer, trainer
 

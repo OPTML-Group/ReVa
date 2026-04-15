@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from pathlib import Path
 
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainerCallback
@@ -22,11 +23,9 @@ from eval.metrics import (
 )
 
 from eval.unlearn import get_unlearn_method
-from metrics.bio_mcq import evaluate_bio_mcq_with_both_modes
-from metrics.normalgeneration import evaluate_normal_generation
-# from metrics.direct_refusal_eval_multi_round import evaluate_direct_refusal_wmdp_bio_comprehensive, evaluate_direct_refusal_wmdp_bio_with_generation_consistency
-# from metrics.direct_refusal_eval_llm import evaluate_direct_refusal_wmdp_bio_comprehensive, evaluate_direct_refusal_wmdp_bio_with_generation_consistency
-from metrics.direct_refusal_eval import evaluate_direct_refusal_wmdp_bio_comprehensive, evaluate_direct_refusal_wmdp_bio_with_generation_consistency
+from eval.metrics.bio_mcq import evaluate_bio_mcq_with_both_modes
+from eval.metrics.normalgeneration import evaluate_normal_generation
+from eval.metrics.direct_refusal_eval import evaluate_direct_refusal_wmdp_bio_comprehensive, evaluate_direct_refusal_wmdp_bio_with_generation_consistency
 
 
 
@@ -246,11 +245,11 @@ class Unlearn:
         else:
             model_name = os.path.join(root, "checkpoints")
         #-----------------------------mmlu的评测（通过llm-harness库）-----------------------------
-        # eval_few_shots(model_name=model_name,  task_list=["mmlu"],output_path=f"{root}/mmlu.json")
-        # torch.cuda.empty_cache()
+        eval_few_shots(model_name=model_name,  task_list=["mmlu"],output_path=f"{root}/mmlu.json")
+        torch.cuda.empty_cache()
         #-----------------------------wmdp的评测（通过llm-harness库）-----------------------------
-        # eval_few_shots(model_name=model_name, task_list=["wmdp_bio"],output_path=f"{root}/wmdp.json")
-        # torch.cuda.empty_cache()
+        eval_few_shots(model_name=model_name, task_list=["wmdp_bio"],output_path=f"{root}/wmdp.json")
+        torch.cuda.empty_cache()
         # -----------------------------对于Unlearn内容的评估-----------------------------
 
         # 评测参数配置
@@ -258,177 +257,177 @@ class Unlearn:
         unknown_questions_count = 1216
         known_questions_count = 4579   # 应该知道的问题数量（通用知识）
 
-        # # 评估unlearn内容（期望模型拒答）
-        # print("Running Bio MCQ evaluation...")
-        # model, tokenizer = self._load_model_and_tokenizer(model_name)
+        # 评估unlearn内容（期望模型拒答）
+        print("Running Bio MCQ evaluation...")
+        model, tokenizer = self._load_model_and_tokenizer(model_name)
         
-        # # 可以选择使用ABCD或ABCDE作为选项
-        # letters = ['A', 'B', 'C', 'D']  # 或者 ['A', 'B', 'C', 'D'] 如果不想要E选项
-        # bio_results = evaluate_bio_mcq_with_both_modes(model, tokenizer, root=root, max_samples=unknown_questions_count, model_name="zephyr-7b-beta", letters=letters)
+        # 可以选择使用ABCD或ABCDE作为选项
+        letters = ['A', 'B', 'C', 'D']  # 或者 ['A', 'B', 'C', 'D'] 如果不想要E选项
+        bio_results = evaluate_bio_mcq_with_both_modes(model, tokenizer, root=root, max_samples=unknown_questions_count, model_name="zephyr-7b-beta", letters=letters)
         
-        # print(f"Bio MCQ evaluation completed. See {root}/bio_mcq*.json")
-        # print(f"Full vocab entropy: {bio_results['full_vocab_entropy']:.3f}")
-        # print(f"Total questions: {bio_results['total_questions']}")
-        # torch.cuda.empty_cache()
+        print(f"Bio MCQ evaluation completed. See {root}/bio_mcq*.json")
+        print(f"Full vocab entropy: {bio_results['full_vocab_entropy']:.3f}")
+        print(f"Total questions: {bio_results['total_questions']}")
+        torch.cuda.empty_cache()
 
         # -----------------------------Direct Refusal with Generation Consistency评估----------------------------- 
-        # # 评估模型在拒答后的一致性（第二轮对话），包含四个指标
-        # try:
-        #     print("Running Direct Refusal with Generation Consistency evaluation...")
-        #     comprehensive_results = evaluate_direct_refusal_wmdp_bio_with_generation_consistency(
-        #         model_path=model_name,
-        #         cache_dir=self.cache_dir,
-        #         root=root,
-        #         max_samples=unknown_questions_count,
-        #         batch_size=64,
-        #         max_new_tokens=200,
-        #         follow_up_max_tokens=50
-        #     )
-        #     print(f"Direct Refusal with Generation Consistency evaluation completed.")
-        #     print(f"Four Key Metrics:")
-        #     print(f"  1. Refusal Rate (without hint): {comprehensive_results['metrics']['refusal_rate_without_hint']:.4f}")
-        #     print(f"  2. Refusal Rate (with hint): {comprehensive_results['metrics']['refusal_rate_with_hint']:.4f}")
-        #     print(f"  3. Generation Consistency (no hint): {comprehensive_results['metrics']['generation_refusal_consistency_without_hint']:.4f}")
-        #     print(f"  4. Generation Consistency (hint): {comprehensive_results['metrics']['generation_refusal_consistency_with_hint']:.4f}")
-        #     print(f"Results saved to: {root}/direct_refusal_comprehensive_with_generation/")
-        # except Exception as e:
-        #     print(f"Direct Refusal with Generation Consistency evaluation failed: {e}")
-        # torch.cuda.empty_cache()
+        # 评估模型在拒答后的一致性（第二轮对话），包含四个指标
+        try:
+            print("Running Direct Refusal with Generation Consistency evaluation...")
+            comprehensive_results = evaluate_direct_refusal_wmdp_bio_with_generation_consistency(
+                model_path=model_name,
+                cache_dir=self.cache_dir,
+                root=root,
+                max_samples=unknown_questions_count,
+                batch_size=64,
+                max_new_tokens=200,
+                follow_up_max_tokens=50
+            )
+            print(f"Direct Refusal with Generation Consistency evaluation completed.")
+            print(f"Four Key Metrics:")
+            print(f"  1. Refusal Rate (without hint): {comprehensive_results['metrics']['refusal_rate_without_hint']:.4f}")
+            print(f"  2. Refusal Rate (with hint): {comprehensive_results['metrics']['refusal_rate_with_hint']:.4f}")
+            print(f"  3. Generation Consistency (no hint): {comprehensive_results['metrics']['generation_refusal_consistency_without_hint']:.4f}")
+            print(f"  4. Generation Consistency (hint): {comprehensive_results['metrics']['generation_refusal_consistency_with_hint']:.4f}")
+            print(f"Results saved to: {root}/direct_refusal_comprehensive_with_generation/")
+        except Exception as e:
+            print(f"Direct Refusal with Generation Consistency evaluation failed: {e}")
+        torch.cuda.empty_cache()
 
         # -----------------------------对于遗忘知识的Consistency的评估(最大字母概率)----------------------------- 
         # -------------------------评估模型对不同输入格式的一致性-----------------------
-        # print("Running Consistency evaluation for format robustness...")
-        # model, tokenizer = self._load_model_and_tokenizer(model_name)
+        print("Running Consistency evaluation for format robustness...")
+        model, tokenizer = self._load_model_and_tokenizer(model_name)
         
 
         
-        # # 导入consistency evaluation函数
-        # from metrics import evaluate_consistency_bio_mcq
+        # 导入consistency evaluation函数
+        from eval.metrics import evaluate_consistency_bio_mcq
         
-        # consistency_results = evaluate_consistency_bio_mcq(
-        #     model, tokenizer, root=root, 
-        #     debug_samples=3, max_samples=unknown_questions_count, model_name=self.model_name
-        # )
+        consistency_results = evaluate_consistency_bio_mcq(
+            model, tokenizer, root=root, 
+            debug_samples=3, max_samples=unknown_questions_count, model_name=self.model_name
+        )
         
-        # print(f"Consistency evaluation completed. See {root}/bio_mcq_consistency.json")
+        print(f"Consistency evaluation completed. See {root}/bio_mcq_consistency.json")
         
-        # # 打印两种E选项情况下的结果
-        # for e_option_name, e_results in consistency_results["e_option_results"].items():
-        #     print(f"E选项 ({e_option_name}):")
-        #     print(f"  Accuracy consistency: {e_results['accuracy_mean']:.3f} ± {e_results['accuracy_std']:.3f}")
-        #     print(f"  Choose E rate consistency: {e_results['rejection_rate_mean']:.3f} ± {e_results['rejection_rate_std']:.3f}")
-        # torch.cuda.empty_cache()
+        # 打印两种E选项情况下的结果
+        for e_option_name, e_results in consistency_results["e_option_results"].items():
+            print(f"E选项 ({e_option_name}):")
+            print(f"  Accuracy consistency: {e_results['accuracy_mean']:.3f} ± {e_results['accuracy_std']:.3f}")
+            print(f"  Choose E rate consistency: {e_results['rejection_rate_mean']:.3f} ± {e_results['rejection_rate_std']:.3f}")
+        torch.cuda.empty_cache()
 
         # -------------------------评估模型对不同输入格式的一致性（随机版）-----------------------
         # 导入随机版的一致性评估函数
-        # print("Running Consistency evaluation for format robustness...")
-        # model, tokenizer = self._load_model_and_tokenizer(model_name)
+        print("Running Consistency evaluation for format robustness...")
+        model, tokenizer = self._load_model_and_tokenizer(model_name)
 
-        # from metrics.consistency_bio_mcq_random import evaluate_consistency_bio_mcq_random
+        from eval.metrics.consistency_bio_mcq_random import evaluate_consistency_bio_mcq_random
 
-        # consistency_results = evaluate_consistency_bio_mcq_random(
-        #     model, tokenizer, root=root, 
-        #     debug_samples=3, max_samples=unknown_questions_count, model_name=self.model_name
-        # )
+        consistency_results = evaluate_consistency_bio_mcq_random(
+            model, tokenizer, root=root, 
+            debug_samples=3, max_samples=unknown_questions_count, model_name=self.model_name
+        )
         
-        # print(f"Consistency evaluation completed. See {root}/bio_mcq_consistency.json")
+        print(f"Consistency evaluation completed. See {root}/bio_mcq_consistency.json")
         
-        # # 打印两种E选项情况下的结果
-        # for e_option_name, e_results in consistency_results["e_option_results"].items():
-        #     print(f"E选项 ({e_option_name}):")
-        #     print(f"  Accuracy consistency: {e_results['accuracy_mean']:.3f} ± {e_results['accuracy_std']:.3f}")
-        #     print(f"  Choose E rate consistency: {e_results['rejection_rate_mean']:.3f} ± {e_results['rejection_rate_std']:.3f}")
-        # torch.cuda.empty_cache()
+        # 打印两种E选项情况下的结果
+        for e_option_name, e_results in consistency_results["e_option_results"].items():
+            print(f"E选项 ({e_option_name}):")
+            print(f"  Accuracy consistency: {e_results['accuracy_mean']:.3f} ± {e_results['accuracy_std']:.3f}")
+            print(f"  Choose E rate consistency: {e_results['rejection_rate_mean']:.3f} ± {e_results['rejection_rate_std']:.3f}")
+        torch.cuda.empty_cache()
 
         # # ---------------------评估模型对遗忘知识验证时是否认同自己之前的答案(最大字母概率)----------------------------------
-        # print("Running Self-Validation evaluation...")
-        # model, tokenizer = self._load_model_and_tokenizer(model_name)
+        print("Running Self-Validation evaluation...")
+        model, tokenizer = self._load_model_and_tokenizer(model_name)
         
-        # # 导入self-validation evaluation函数
-        # from metrics import evaluate_self_validation_bio_mcq
+        # 导入self-validation evaluation函数
+        from eval.metrics import evaluate_self_validation_bio_mcq
         
-        # # 评估模型是否认同自己之前的答案
-        # from metrics.self_validation_improved import evaluate_self_validation_bio_mcq
-        # self_validation_results = evaluate_self_validation_bio_mcq(
-        #     model, tokenizer, root=root, 
-        #     debug_samples=3, max_samples=unknown_questions_count, model_name=self.model_name
-        # )
+        # 评估模型是否认同自己之前的答案
+        from eval.metrics.self_validation_improved import evaluate_self_validation_bio_mcq
+        self_validation_results = evaluate_self_validation_bio_mcq(
+            model, tokenizer, root=root, 
+            debug_samples=3, max_samples=unknown_questions_count, model_name=self.model_name
+        )
         
-        # print(f"Self-Validation evaluation completed. See {root}/bio_mcq_self_validation.json")
-        # print(f"Consistency Rate: {self_validation_results['consistency_rate']:.3f}")
-        # print(f"Instruction Following Rate: {self_validation_results['instruction_following_rate']:.3f}")
-        # torch.cuda.empty_cache()
+        print(f"Self-Validation evaluation completed. See {root}/bio_mcq_self_validation.json")
+        print(f"Consistency Rate: {self_validation_results['consistency_rate']:.3f}")
+        print(f"Instruction Following Rate: {self_validation_results['instruction_following_rate']:.3f}")
+        torch.cuda.empty_cache()
 
         
         # -----------------------------对于通用知识的Knowledge Retention评估----------------------------- 
-        # print("Running Knowledge Retention evaluation...")
-        # model, tokenizer = self._load_model_and_tokenizer(model_name)
+        print("Running Knowledge Retention evaluation...")
+        model, tokenizer = self._load_model_and_tokenizer(model_name)
         
-        # # # 评估通用知识（期望模型正确回答）
-        # knowledge_results = evaluate_answer_rate(model, tokenizer, root=root, max_samples=known_questions_count, model_name=model_name)
-        # print(f"Knowledge Retention evaluation completed. See {root}/knowledge_retain/")
-        # print(f"Correct answers: {knowledge_results['correct_answers']}")
-        # print(f"Refused answers: {knowledge_results['refused_answers']}")
-        # torch.cuda.empty_cache()
+        # # 评估通用知识（期望模型正确回答）
+        knowledge_results = evaluate_answer_rate(model, tokenizer, root=root, max_samples=known_questions_count, model_name=model_name)
+        print(f"Knowledge Retention evaluation completed. See {root}/knowledge_retain/")
+        print(f"Correct answers: {knowledge_results['correct_answers']}")
+        print(f"Refused answers: {knowledge_results['refused_answers']}")
+        torch.cuda.empty_cache()
         
         # -----------------------------在Unknown上的rejection rate----------------------------- 
-        # # 在Unknown上的rejection rate评估
-        # print("Running Unknowns rejection rate evaluation...")
-        # from metrics.unknowns_eval import evaluate_unknowns_rejection_rate
+        # 在Unknown上的rejection rate评估
+        print("Running Unknowns rejection rate evaluation...")
+        from eval.metrics.unknowns_eval import evaluate_unknowns_rejection_rate
         
-        # # 设置unknowns.json数据文件路径（需要根据实际路径调整）
-        # unknowns_data_path = "/egr/research-optml/jackyofgrj/grj/BeHonest/Unknowns/unknowns.json"  # 相对于项目根目录的路径
+        # 设置unknowns.json数据文件路径（需要根据实际路径调整）
+        unknowns_data_path = Path(__file__).resolve().parents[3] / "files" / "data" / "Unknowns" / "unknowns.json"
         
-        # # 检查数据文件是否存在，如果不存在则跳过评估
-        # if os.path.exists(unknowns_data_path):
-        #     unknowns_results = evaluate_unknowns_rejection_rate(
-        #         model_path=model_name,
-        #         data_path=unknowns_data_path,
-        #         root=root,
-        #         model_name=self.model_name,
-        #         max_samples=None  # 使用全部数据
-        #     )
+        # 检查数据文件是否存在，如果不存在则跳过评估
+        if os.path.exists(unknowns_data_path):
+            unknowns_results = evaluate_unknowns_rejection_rate(
+                model_path=model_name,
+                data_path=unknowns_data_path,
+                root=root,
+                model_name=self.model_name,
+                max_samples=None  # 使用全部数据
+            )
             
-        #     if unknowns_results:
-        #         print(f"Unknowns rejection rate evaluation completed.")
-        #         print(f"Refusal rate: {unknowns_results['refusal_rate']:.4f}")
-        #         print(f"Results saved to: {unknowns_results['output_file']}")
-        #     else:
-        #         print("Unknowns rejection rate evaluation failed.")
-        # else:
-        #     print(f"Unknowns data file not found at {unknowns_data_path}, skipping evaluation.")
+            if unknowns_results:
+                print(f"Unknowns rejection rate evaluation completed.")
+                print(f"Refusal rate: {unknowns_results['refusal_rate']:.4f}")
+                print(f"Results saved to: {unknowns_results['output_file']}")
+            else:
+                print("Unknowns rejection rate evaluation failed.")
+        else:
+            print(f"Unknowns data file not found at {unknowns_data_path}, skipping evaluation.")
         
-        # torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
 
         # # -----------------------------在BBH上测出的Inconsistency和平均acc（多选题形式的常识推理问答）----------------------------- 
-        # print("Running BBH evaluation...")
-        # from metrics.bbh_consistency_eval import evaluate_bbh_consistency
-        # model, tokenizer = self._load_model_and_tokenizer(model_name)
+        print("Running BBH evaluation...")
+        from eval.metrics.bbh_consistency_eval import evaluate_bbh_consistency
+        model, tokenizer = self._load_model_and_tokenizer(model_name)
         
-        # # 提取干净的模型名称，移除路径信息
-        # clean_model_name = os.path.basename(self.model_name.rstrip('/'))
+        # 提取干净的模型名称，移除路径信息
+        clean_model_name = os.path.basename(self.model_name.rstrip('/'))
         
-        # try:
-        #     bbh_results = evaluate_bbh_consistency(
-        #         model=model, 
-        #         tokenizer=tokenizer, 
-        #         root=root, 
-        #         device='cuda',
-        #         model_name=clean_model_name
-        #     )
+        try:
+            bbh_results = evaluate_bbh_consistency(
+                model=model, 
+                tokenizer=tokenizer, 
+                root=root, 
+                device='cuda',
+                model_name=clean_model_name
+            )
             
-        #     if bbh_results and 'error' not in bbh_results:
-        #         print(f"BBH consistency evaluation completed.")
-        #         print(f"Average Accuracy: {bbh_results['avg_accuracy']:.4f} ({bbh_results['avg_accuracy']*100:.2f}%)")
-        #         print(f"Overall Inconsistency: {bbh_results['inconsistency_scores']['overall_inconsistency']:.4f}")
-        #         print(f"Results saved to: {root}/bbh_consistency/")
-        #     else:
-        #         print(f"BBH consistency evaluation failed: {bbh_results.get('error', 'Unknown error')}")
+            if bbh_results and 'error' not in bbh_results:
+                print(f"BBH consistency evaluation completed.")
+                print(f"Average Accuracy: {bbh_results['avg_accuracy']:.4f} ({bbh_results['avg_accuracy']*100:.2f}%)")
+                print(f"Overall Inconsistency: {bbh_results['inconsistency_scores']['overall_inconsistency']:.4f}")
+                print(f"Results saved to: {root}/bbh_consistency/")
+            else:
+                print(f"BBH consistency evaluation failed: {bbh_results.get('error', 'Unknown error')}")
                 
-        # except Exception as e:
-        #     print(f"BBH consistency evaluation failed with exception: {e}")
+        except Exception as e:
+            print(f"BBH consistency evaluation failed with exception: {e}")
         
-        # torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
 
         # -----------------------------Open-Form Consistency----------------------------- 
         # Open-Form Consistency Evaluation
