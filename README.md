@@ -4,7 +4,6 @@ This repository contains the official implementation for "Unlearners Can Lie: Ev
 
 [![ACL 2026](https://img.shields.io/badge/ACL%202026-Main%20Conference-1f6feb)](#) [![huggingface](https://img.shields.io/badge/REVA%20Weights-%F0%9F%A4%97-78ac62.svg?style=flat-square)](https://huggingface.co/Electrolyte76/ReVa)
 
-This README assumes that the contents of this directory are the repository root on GitHub. Users should run commands from this directory directly, not from an outer **`simnpo_wmdp/`** parent folder.
 
 ## Installation
 
