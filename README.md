@@ -2,7 +2,7 @@
 
 This repository contains the official implementation for "Unlearners Can Lie: Evaluating and Improving Honesty in LLM Unlearning" (ACL 2026 main conference).
 
-[![ACL 2026](https://img.shields.io/badge/ACL%202026-Main%20Conference-1f6feb)](#) [![huggingface](https://img.shields.io/badge/REVA%20Weights-%F0%9F%A4%97-78ac62.svg?style=flat-square)](https://huggingface.co/Electrolyte76/ReVa)
+[![ACL 2026](https://img.shields.io/badge/ACL%202026-Main%20Conference-1f6feb)](#) [![huggingface](https://img.shields.io/badge/REVA%20Weights-%F0%9F%A4%97-78ac62.svg?style=flat-square)](https://huggingface.co/OPTML-Group/Reva)
 
 
 ## Installation
@@ -161,7 +161,7 @@ huggingface-cli download OPTML-Group/SimNPO-WMDP-zephyr-7b-beta \
 We also release our REVA weights on Hugging Face:
 
 ```bash
-huggingface-cli download Electrolyte76/ReVa \
+huggingface-cli download OPTML-Group/Reva \
   --local-dir checkpoints/REVA \
   --local-dir-use-symlinks False
 ```
